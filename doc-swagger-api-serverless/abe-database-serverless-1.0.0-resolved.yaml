@@ -1,0 +1,153 @@
+---
+openapi: 3.0.0
+info:
+  title: API Serverless de Enquetes
+  description: "Essa API é utilizada para listar, cadastrar e votar em pesquisas/enquetes."
+  contact:
+    email: you@your-company.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://rp6w0qdem1.execute-api.us-east-1.amazonaws.com
+  description: AWS
+paths:
+  /polls:
+    get:
+      tags:
+      - polls
+      summary: Lista todas as enquetes
+      description: |
+        Lista todas as enquetes disponiveis na base de dados
+      operationId: searchPolls
+      responses:
+        "200":
+          description: Lista de enquetes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PoolItem'
+        "404":
+          description: Could not find polls in the database
+        "500":
+          description: Could not retrieve poll
+    post:
+      tags:
+      - polls
+      summary: Adiciona uma enquete
+      description: Adiciona uma enquete ao banco de dados
+      operationId: addPoll
+      requestBody:
+        description: Adicionar enquete
+        content:
+          application/json:
+            example:
+              question: Você prefere?
+              options:
+              - Arroz
+              - Feijão
+              - Macarrão
+              - Outro
+      responses:
+        "200":
+          description: Enquete criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolItem'
+        "400":
+          description: pollId / label must be a string
+        "500":
+          description: Could not create poll
+  /polls/{pollId}:
+    get:
+      tags:
+      - polls
+      summary: Lista uma enquete específica
+      description: |
+        Lista um enquete específica passando o parâmetro Poll ID
+      operationId: searchPollID
+      parameters:
+      - name: pollId
+        in: path
+        description: Poll ID
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: 75d6177d-997b-45d2-accc-36fbfca2e026
+      responses:
+        "200":
+          description: Enquete específica
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolItem'
+        "404":
+          description: Could not find poll with provided pollId
+        "500":
+          description: Could not retrieve poll
+  /votes:
+    post:
+      tags:
+      - votes
+      summary: Adiciona voto em uma enquete
+      description: Adiciona voto em uma enquete
+      operationId: addVotes
+      requestBody:
+        description: Adicionar voto
+        content:
+          application/json:
+            example:
+              pollId: 80901fb1-a4a6-4fd1-8421-9cd7c2fa0383
+              label: Arroz
+      responses:
+        "200":
+          description: Voto adicionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolItem'
+        "404":
+          description: Could not find the provided pollId
+        "500":
+          description: Could not create vote
+components:
+  schemas:
+    PoolItem:
+      required:
+      - options
+      - question
+      type: object
+      properties:
+        enable:
+          type: boolean
+          example: true
+        pollId:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        question:
+          type: string
+          example: Qual seu provedor cloud favorito?
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/Options'
+    Options:
+      required:
+      - label
+      type: object
+      properties:
+        label:
+          type: string
+          example: Azure
+        answers:
+          type: integer
+          format: int64
+          example: 1
